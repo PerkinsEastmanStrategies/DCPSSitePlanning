@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapbox Web Map</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+    <script src="https://unpkg.com/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css">
+    <!-- Mapbox Geocoder -->
+<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.0.0/mapbox-gl-geocoder.css" />
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.0.0/mapbox-gl-geocoder.min.js"></script>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; }
+        #panel { width: 25%; padding: 10px; background: #f8f8f8; overflow: auto; }
+        #map { width: 75%; height: 100vh; }
+        button { display: block; margin: 10px 0; padding: 10px; cursor: pointer; }
+        input { width: 100%; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        
+        
+        #panel {
+    width: 30%;
+    padding: 15px;
+    background: #f8f8f8;
+    overflow: auto;
+    border-right: 2px solid #ddd;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between cards */
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #00857D;
+}
+
+.card h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #0033A0;
+}
+
+.inline-group {
+    display: flex;
+    align-items: center; /* Aligns all items vertically */
+    gap: 10px; /* Adjusts spacing between elements */
+}
+
+.inline-group label {
+    font-size: 16px;
+    line-height: 32px; /* Matches input field height */
+    white-space: nowrap; /* Prevents wrapping */
+}
+
+#floorInput {
+    width: 50px; /* Adjust as needed */
+    height: 20px; /* Reduce height slightly */
+    font-size: 16px;
+    text-align: center;
+    border: none; /* Removes border */
+    border-radius: 4px;
+    padding: 2px;
+    line-height: 20px;
+    vertical-align: middle; /* Helps with centering */
+}
+
+
+.inline-group button {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+
+#spaceSummaryContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.summary-card {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #00857D;
+}
+
+.summary-card h5 {
+    margin: 0;
+    font-size: 16px;
+    color: #00857D;
+}
+
+.summary-card p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.negative {
+    color: red;
+    font-weight: bold;
+}
+
+
+button {
+    background-color: #0033A0;
+    color: white;
+    border: none;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #002080;
+}
+
+.selected {
+    background-color: limegreen !important;
+    border: 2px solid black;
+}
+
+#playSpaceButton {
+    background-color: #0033A0;
+}
+
+#playSpaceButton:hover {
+    background-color: #002080;
+}
+
+#ParkingButton {
+    background-color: #0033A0;
+}
+
+#ParkingButton:hover {
+    background-color: #002080;
+}
+
+#BuildingButton {
+    background-color: #0033A0;
+}
+
+#BuildingButton:hover {
+    background-color: #002080;
+}
+
+#header-container {
+    display: flex;
+    justify-content: space-between; /* Push logo to the right */
+    align-items: center;
+    padding: 10px;
+}
+
+#logo {
+    max-width: 120px; /* Adjust size as needed */
+    height: auto;
+}
+#targetEnrollment {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    width: 80px; /* Adjust width as needed */
+    text-align: center; /* Optional: center text */
+}
+
+#targetEnrollment::placeholder {
+    color: #aaa; /* Lighter placeholder text */
+    font-style: italic;
+}
+/* Add a selected state */
+.selected-button {
+    background-color: #FF530D !important; /* Selected color */
+    color: white !important;
+    border: 2px solid black;
+}
+
+    </style>
+</head>
+<body>
+    <div id="panel">
+        <!-- Header with Logo -->
+        <div id="header-container">
+            <h2>DCPS Site Planning Tool</h2>
+            <img src="logo-Perkins-Eastman.png" alt="Perkins Eastman" id="logo">
+        </div>
+        <!-- Card 1: School Type Selection -->
+        <div class="card">
+            <h4>Identify School Type & Enrollment</h4>
+            Identify your school type and enrollment target.
+            <div class="inline-group">
+                <button id="ESButton" class="school-button" onclick="selectSchoolType('ES')">ES</button>
+                <button id="MSButton" class="school-button" onclick="selectSchoolType('MS')">MS</button>
+                <button id="HSButton" class="school-button" onclick="selectSchoolType('HS')">HS</button>
+            </div>
+            How many students are you planning for?
+            <input type="number" id="targetEnrollment" placeholder="Enter">
+            <p><strong>Target Square Feet:</strong> <span id="targetSqFt">0</span> sq ft</p>
+        </div>
+    
+        <!-- Card 2: Drawing & Floor Selection -->
+        <div class="card">
+            <h4>Site Plan Drawing</h4>
+            Select the element you want to draw by clicking the button and the click points on the map to create shapes. Double click to finsh the shape.
+            <div class="inline-group">
+                <button id="BuildingButton" class="draw-button" onclick="startBuildingDraw()">Draw Building</button>
+  How many floors in the building?
+                <input type="number" id="floorInput" placeholder="# of Floors">
+            </div>
+            <div class="inline-group">
+                <button id="playSpaceButton" class="draw-button" onclick="startPlaySpaceDraw()">Draw Play Space</button>
+                <button id="ParkingButton" class="draw-button" onclick="startParkingDraw()">Draw Parking</button>
+                <button class="draw-button" onclick="loadDallasBuildings()">Extrude Buildings</button>
+            </div>
+        </div>
+    
+        <!-- Card 3: Space Summary -->
+        <div class="card">
+            <h4>Space Summary</h4>
+            <div id="spaceSummaryContainer"></div>
+        </div>
+    
+    </div>
+    
+    <div id="map"></div>
+ 
+
+    <script src="script.js"></script>
+</body>
+</html>
